@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: pemesanan-buku-nazhirah
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false # Render will ask you to input your Neon PostgreSQL connection string during deployment

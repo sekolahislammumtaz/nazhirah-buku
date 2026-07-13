@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - SMP-SMA Islam Nazhirah</title>
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Style Sheet -->
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body style="background-color: #F1F5F9;">
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- AUTH OVERLAY (LOGIN SCREEN) -->
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-card">
+      <img src="/images/logo.png" alt="Logo Nazhirah" class="auth-logo">
+      <h2 class="auth-title">SMP-SMA Islam Nazhirah</h2>
+      <p class="auth-desc">Akses Admin - Pemesanan Buku</p>
+      
+      <form id="login-form" onsubmit="handleLogin(event)">
+        <div class="form-group" style="text-align: left;">
+          <label for="admin-password">Masukkan Password Admin</label>
+            <div style="position: relative;">
+              <input type="password" id="admin-password" class="form-control" placeholder="Masukkan password admin..." required>
+              <span onclick="togglePasswordVisibility()" style="position: absolute; right: 16px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-muted);">
+              <i id="eye-icon" class="fa-solid fa-eye"></i>
+            </span>
+          </div>
+        </div>
+        <button type="submit" class="auth-btn">
+          <i class="fa-solid fa-right-to-bracket"></i> Masuk
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN ADMIN DASHBOARD (Initially Hidden until Authenticated) -->
+  <div id="admin-dashboard" style="display: none;">
+    <!-- Navigation Bar -->
+    <nav class="admin-navbar">
+      <div class="admin-navbar-brand">
+        <img src="/images/logo.png" alt="Logo Nazhirah" class="admin-logo">
+        <div>
+          <span class="admin-brand-text">SMP-SMA Islam Nazhirah</span>
+          <div style="font-size: 0.75rem; color: rgba(255,255,255,0.7); font-weight: 500;">Panel Administrator</div>
+        </div>
+      </div>
+      <div class="admin-navbar-actions">
+        <button onclick="openChangePasswordModal()" class="btn-logout" style="border-color: rgba(255,209,0,0.4); color: var(--accent-yellow);">
+          <i class="fa-solid fa-key"></i> Ubah Password
+        </button>
+        <button onclick="handleLogout()" class="btn-logout">
+          <i class="fa-solid fa-power-off"></i> Keluar
+        </button>
+      </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container" style="max-width: 1200px; padding: 24px 16px;">
+      
+      <!-- Tab Buttons -->
+      <div class="tabs-container">
+        <button id="tab-orders-btn" class="tab-btn active" onclick="switchTab('orders')">
+          <i class="fa-solid fa-receipt"></i> Pesanan Buku
+        </button>
+        <button id="tab-books-btn" class="tab-btn" onclick="switchTab('books')">
+          <i class="fa-solid fa-book"></i> Kelola Daftar Buku
+        </button>
+        <button id="tab-students-btn" class="tab-btn" onclick="switchTab('students')">
+          <i class="fa-solid fa-users"></i> Kelola Data Siswa
+        </button>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB 1: ORDERS (PESANAN BUKU) -->
+      <!-- ========================================== -->
+      <div id="tab-orders" class="tab-content active">
+        <div class="admin-card">
+          <div class="card-header-flex">
+            <div>
+              <h2 style="color: var(--primary-navy); font-weight: 800; font-size: 1.4rem;">
+                Daftar Pemesanan Buku
+              </h2>
+              <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+                Kelola data pesanan yang dikirim oleh orang tua siswa.
+              </p>
+            </div>
+            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+              <button onclick="exportOrdersToExcel()" class="btn-action-primary">
+                <i class="fa-solid fa-file-invoice"></i> Ekspor Daftar Pesanan
+              </button>
+              
+              <div style="display: flex; gap: 8px; align-items: center; border: 1px solid #CBD5E1; padding: 6px 12px; border-radius: var(--border-radius-sm); background-color: #F8FAFC;">
+                <label for="recap-class-select" style="font-size: 0.8rem; font-weight: 700; color: var(--primary-navy); white-space: nowrap;">Rekap Kelas:</label>
+                <select id="recap-class-select" class="form-control" style="padding: 4px 8px; font-size: 0.8rem; border: 1px solid #CBD5E1; min-width: 120px; height: 32px; width: auto; background-position: right 8px center;">
+                  <option value="all">Semua Kelas</option>
+                  <option value="7">Kelas 7</option>
+                  <option value="8">Kelas 8</option>
+                  <option value="9">Kelas 9</option>
+                  <option value="10">Kelas 10</option>
+                  <option value="11">Kelas 11</option>
+                  <option value="12">Kelas 12</option>
+                </select>
+                <button onclick="exportRecapToExcel()" class="btn-action-accent" style="padding: 6px 12px; font-size: 0.8rem; height: 32px; border-radius: 4px;">
+                  <i class="fa-solid fa-file-excel"></i> Ekspor Rekap
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Orders Table -->
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>ID Pesanan</th>
+                  <th>Tanggal</th>
+                  <th>Siswa</th>
+                  <th>Kelas</th>
+                  <th>No VA</th>
+                  <th>Orang Tua</th>
+                  <th>Kontak</th>
+                  <th>Buku yang Dipesan</th>
+                  <th>Total Harga</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="orders-table-body">
+                <tr>
+                  <td colspan="11" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Memuat data pesanan...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB 2: BOOKS MANAGEMENT (KELOLA DAFTAR BUKU) -->
+      <!-- ========================================== -->
+      <div id="tab-books" class="tab-content">
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 24px;" class="form-grid-3">
+          
+          <!-- Column A: Tambah Buku Manual -->
+          <div class="admin-card" style="margin-bottom: 0;">
+            <h3 class="section-title" style="margin-bottom: 16px;">
+              <i class="fa-solid fa-plus-circle"></i> Tambah Buku Manual
+            </h3>
+            
+            <form id="add-book-form" onsubmit="handleAddBook(event)">
+              <div class="form-group">
+                <label for="book-title">Nama Buku</label>
+                <input type="text" id="book-title" class="form-control" placeholder="Masukkan nama buku..." required>
+              </div>
+              <div class="form-group">
+                <label for="book-publisher">Penerbit</label>
+                <input type="text" id="book-publisher" class="form-control" placeholder="Masukkan penerbit..." required>
+              </div>
+              <div class="form-grid-3" style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 0;">
+                <div class="form-group">
+                  <label for="book-class">Kelas (7 - 12)</label>
+                  <select id="book-class" class="form-control" required>
+                    <option value="" disabled selected>Pilih...</option>
+                    <option value="7">Kelas 7</option>
+                    <option value="8">Kelas 8</option>
+                    <option value="9">Kelas 9</option>
+                    <option value="10">Kelas 10</option>
+                    <option value="11">Kelas 11</option>
+                    <option value="12">Kelas 12</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="book-price">Harga (Rp)</label>
+                  <input type="number" id="book-price" class="form-control" placeholder="Contoh: 75000" required>
+                </div>
+              </div>
+              <button type="submit" class="btn-action-primary" style="width: 100%; margin-top: 8px;">
+                <i class="fa-solid fa-save"></i> Simpan Buku
+              </button>
+            </form>
+          </div>
+
+          <!-- Column B: Impor Buku & Hapus Per Kelas -->
+          <div style="display: flex; flex-direction: column; gap: 24px;">
+            
+            <!-- Excel Import Card -->
+            <div class="admin-card" style="margin-bottom: 0; flex: 1;">
+              <h3 class="section-title" style="margin-bottom: 16px;">
+                <i class="fa-solid fa-file-import"></i> Impor dari Google Sheet / Excel
+              </h3>
+              <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: -12px; margin-bottom: 16px;">
+                Format kolom di file: <strong>Nama Buku</strong>, <strong>Penerbit</strong>, <strong>Harga Buku</strong>. (Opsional: kolom <strong>Kelas</strong>).
+              </p>
+
+              <form id="import-book-form" onsubmit="handleImportBooks(event)">
+                <div class="form-group">
+                  <label for="import-class">Default Kelas (jika tidak ada di Excel)</label>
+                  <select id="import-class" class="form-control" required>
+                    <option value="" disabled selected>Pilih kelas...</option>
+                    <option value="7">Kelas 7</option>
+                    <option value="8">Kelas 8</option>
+                    <option value="9">Kelas 9</option>
+                    <option value="10">Kelas 10</option>
+                    <option value="11">Kelas 11</option>
+                    <option value="12">Kelas 12</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="import-file">Pilih File Excel (.xlsx, .xls) / CSV</label>
+                  <input type="file" id="import-file" class="form-control" accept=".xlsx, .xls, .csv" required>
+                </div>
+                <button type="submit" class="btn-action-accent" style="width: 100%; margin-top: 8px;">
+                  <i class="fa-solid fa-upload"></i> Unggah & Impor Buku
+                </button>
+              </form>
+            </div>
+
+            <!-- Clear Books per Class Card -->
+            <div class="admin-card" style="margin-bottom: 0;">
+              <h3 class="section-title" style="margin-bottom: 16px; color: #EF4444; border-bottom-color: #FEE2E2;">
+                <i class="fa-solid fa-triangle-exclamation"></i> Hapus Semua Buku per Kelas
+              </h3>
+              
+              <div style="display: flex; gap: 12px; align-items: flex-end;">
+                <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                  <label for="clear-class">Pilih Kelas</label>
+                  <select id="clear-class" class="form-control">
+                    <option value="" disabled selected>Pilih kelas...</option>
+                    <option value="7">Kelas 7</option>
+                    <option value="8">Kelas 8</option>
+                    <option value="9">Kelas 9</option>
+                    <option value="10">Kelas 10</option>
+                    <option value="11">Kelas 11</option>
+                    <option value="12">Kelas 12</option>
+                  </select>
+                </div>
+                <button onclick="clearBooksByClass()" class="btn-danger" style="white-space: nowrap;">
+                  <i class="fa-solid fa-trash-can"></i> Hapus Kelas
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Book List Table Section -->
+        <div class="admin-card">
+          <div class="card-header-flex">
+            <div>
+              <h2 style="color: var(--primary-navy); font-weight: 800; font-size: 1.4rem;">
+                Daftar Buku Terdaftar
+              </h2>
+            </div>
+            
+            <!-- Filters -->
+            <div style="display: flex; gap: 12px; align-items: center;" class="form-grid-3">
+              <input type="text" id="search-book" class="form-control" placeholder="Cari buku..." oninput="filterBooksTable()" style="max-width: 250px;">
+              <select id="filter-class" class="form-control" onchange="filterBooksTable()" style="max-width: 160px; min-width: 120px;">
+                <option value="all">Semua Kelas</option>
+                <option value="7">Kelas 7</option>
+                <option value="8">Kelas 8</option>
+                <option value="9">Kelas 9</option>
+                <option value="10">Kelas 10</option>
+                <option value="11">Kelas 11</option>
+                <option value="12">Kelas 12</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Books Table -->
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Kelas</th>
+                  <th>Nama Buku</th>
+                  <th>Penerbit</th>
+                  <th>Harga</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="books-table-body">
+                <tr>
+                  <td colspan="6" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Memuat daftar buku...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB 3: STUDENTS (KELOLA DATA SISWA) -->
+      <!-- ========================================== -->
+      <div id="tab-students" class="tab-content">
+        <!-- Import student data section -->
+        <div class="admin-card">
+          <div class="card-header-flex">
+            <div>
+              <h2 style="color: var(--primary-navy); font-weight: 800; font-size: 1.4rem;">
+                Impor Data Siswa dari Excel
+              </h2>
+              <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 4px;">
+                Unggah file Excel daftar siswa dengan kolom: <b>Nama Siswa</b>, <b>Kelas</b>, <b>No VA</b>, <b>No Whatsapp</b>, <b>Alamat Email</b>.
+              </p>
+            </div>
+            <div>
+              <button onclick="clearAllStudents()" class="btn-danger">
+                <i class="fa-solid fa-trash-can"></i> Kosongkan Semua Data Siswa
+              </button>
+            </div>
+          </div>
+
+          <form id="import-students-form" onsubmit="handleImportStudents(event)" style="border: 2px dashed #E2E8F0; padding: 24px; border-radius: var(--border-radius-md); text-align: center; background-color: #F8FAFC;">
+            <div style="margin-bottom: 16px;">
+              <i class="fa-regular fa-file-excel" style="font-size: 3rem; color: #10B981; margin-bottom: 12px;"></i>
+              <p style="font-weight: 600; color: var(--primary-navy);">Pilih file Excel (.xlsx / .xls)</p>
+              <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Pastikan data kolom sudah sesuai format.</p>
+            </div>
+            <input type="file" id="import-students-file" accept=".xlsx, .xls" required style="display: inline-block; margin-bottom: 16px; font-size: 0.9rem;">
+            <div>
+              <button type="submit" class="btn-action-accent" style="padding: 10px 24px;">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Mulai Impor Data Siswa
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Student List Table Section -->
+        <div class="admin-card">
+          <div class="card-header-flex">
+            <div>
+              <h2 style="color: var(--primary-navy); font-weight: 800; font-size: 1.4rem;">
+                Daftar Siswa Terdaftar
+              </h2>
+            </div>
+            
+            <!-- Filters -->
+            <div style="display: flex; gap: 12px; align-items: center;" class="form-grid-3">
+              <input type="text" id="search-student" class="form-control" placeholder="Cari siswa..." oninput="filterStudentsTable()" style="max-width: 250px;">
+              <select id="filter-student-class" class="form-control" onchange="filterStudentsTable()" style="max-width: 160px; min-width: 120px;">
+                <option value="all">Semua Kelas</option>
+                <option value="7">Kelas 7</option>
+                <option value="8">Kelas 8</option>
+                <option value="9">Kelas 9</option>
+                <option value="10">Kelas 10</option>
+                <option value="11">Kelas 11</option>
+                <option value="12">Kelas 12</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Students Table -->
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Nama Siswa</th>
+                  <th>Kelas</th>
+                  <th>No Virtual Account (VA)</th>
+                  <th>WhatsApp</th>
+                  <th>Alamat Email</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="students-table-body">
+                <tr>
+                  <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                    <i class="fa-solid fa-spinner fa-spin"></i> Memuat data siswa...
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: EDIT BOOK -->
+  <!-- ========================================== -->
+  <div id="edit-book-modal" class="modal-overlay">
+    <div class="modal-content" style="text-align: left; max-width: 500px; border-top-color: var(--primary-navy);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #F1F5F9; padding-bottom: 12px;">
+        <h3 style="color: var(--primary-navy); font-weight: 800; font-size: 1.3rem;">
+          <i class="fa-solid fa-pen-to-square"></i> Ubah Detail Buku
+        </h3>
+        <button onclick="closeEditBookModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="edit-book-form" onsubmit="handleUpdateBook(event)">
+        <input type="hidden" id="edit-book-id">
+        <div class="form-group">
+          <label for="edit-book-title">Nama Buku</label>
+          <input type="text" id="edit-book-title" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label for="edit-book-publisher">Penerbit</label>
+          <input type="text" id="edit-book-publisher" class="form-control" required>
+        </div>
+        <div class="form-grid-3" style="grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="form-group">
+            <label for="edit-book-class">Kelas</label>
+            <select id="edit-book-class" class="form-control" required>
+              <option value="7">Kelas 7</option>
+              <option value="8">Kelas 8</option>
+              <option value="9">Kelas 9</option>
+              <option value="10">Kelas 10</option>
+              <option value="11">Kelas 11</option>
+              <option value="12">Kelas 12</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="edit-book-price">Harga (Rp)</label>
+            <input type="number" id="edit-book-price" class="form-control" required>
+          </div>
+        </div>
+        
+        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+          <button type="button" onclick="closeEditBookModal()" class="btn-logout" style="color: var(--text-dark); border-color: #CBD5E1; padding: 10px 20px;">
+            Batal
+          </button>
+          <button type="submit" class="btn-action-primary" style="padding: 10px 24px;">
+            Simpan Perubahan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: EDIT ORDER -->
+  <!-- ========================================== -->
+  <div id="edit-order-modal" class="modal-overlay">
+    <div class="modal-content" style="text-align: left; max-width: 600px; border-top-color: var(--primary-navy);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #F1F5F9; padding-bottom: 12px;">
+        <h3 style="color: var(--primary-navy); font-weight: 800; font-size: 1.3rem;">
+          <i class="fa-solid fa-pen-to-square"></i> Ubah Data Pemesanan
+        </h3>
+        <button onclick="closeEditOrderModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="edit-order-form" onsubmit="handleUpdateOrder(event)">
+        <input type="hidden" id="edit-order-id">
+        
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label for="edit-order-student">Nama Siswa</label>
+            <input type="text" id="edit-order-student" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-order-class">Kelas</label>
+            <select id="edit-order-class" class="form-control" required>
+              <option value="7">Kelas 7</option>
+              <option value="8">Kelas 8</option>
+              <option value="9">Kelas 9</option>
+              <option value="10">Kelas 10</option>
+              <option value="11">Kelas 11</option>
+              <option value="12">Kelas 12</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label for="edit-order-va">No. Virtual Account</label>
+            <input type="text" id="edit-order-va" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-order-parent">Nama Orang Tua</label>
+            <input type="text" id="edit-order-parent" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label for="edit-order-whatsapp">Whatsapp Orang Tua</label>
+            <input type="text" id="edit-order-whatsapp" class="form-control" required>
+          </div>
+          <div class="form-group">
+            <label for="edit-order-email">Email Orang Tua</label>
+            <input type="email" id="edit-order-email" class="form-control" required>
+          </div>
+        </div>
+
+        <!-- Custom Books checklist edit (shows list of current books for this order, allows updating price or adding metadata) -->
+        <div class="form-group">
+          <label>Daftar Buku Dipesan (Edit Detail & Harga)</label>
+          <div id="edit-order-books-container" style="border: 2px solid #E2E8F0; padding: 12px; border-radius: var(--border-radius-sm); max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-color: #F8FAFC;">
+            <!-- Books in order will render here with remove options -->
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="edit-order-total">Total Harga (Rp)</label>
+          <input type="number" id="edit-order-total" class="form-control" required>
+        </div>
+        
+        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+          <button type="button" onclick="closeEditOrderModal()" class="btn-logout" style="color: var(--text-dark); border-color: #CBD5E1; padding: 10px 20px;">
+            Batal
+          </button>
+          <button type="submit" class="btn-action-primary" style="padding: 10px 24px;">
+            Simpan Perubahan
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: CHANGE PASSWORD -->
+  <!-- ========================================== -->
+  <div id="change-password-modal" class="modal-overlay">
+    <div class="modal-content" style="text-align: left; max-width: 400px; border-top-color: var(--primary-navy);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #F1F5F9; padding-bottom: 12px;">
+        <h3 style="color: var(--primary-navy); font-weight: 800; font-size: 1.3rem;">
+          <i class="fa-solid fa-key"></i> Ubah Password Admin
+        </h3>
+        <button onclick="closeChangePasswordModal()" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="change-password-form" onsubmit="handleChangePassword(event)">
+        <div class="form-group">
+          <label for="new-admin-password">Password Baru</label>
+          <input type="password" id="new-admin-password" class="form-control" required minlength="4">
+        </div>
+        <div class="form-group">
+          <label for="new-admin-password-confirm">Konfirmasi Password Baru</label>
+          <input type="password" id="new-admin-password-confirm" class="form-control" required minlength="4">
+        </div>
+        
+        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px;">
+          <button type="button" onclick="closeChangePasswordModal()" class="btn-logout" style="color: var(--text-dark); border-color: #CBD5E1; padding: 10px 20px;">
+            Batal
+          </button>
+          <button type="submit" class="btn-action-primary" style="padding: 10px 24px;">
+            Ubah Password
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- App Admin script -->
+  <script src="/js/admin.js"></script>
+</body>
+</html>
