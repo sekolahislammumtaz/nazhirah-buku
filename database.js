@@ -25,14 +25,17 @@ function convertPlaceholders(sql) {
 
 if (isPostgres) {
   console.log('Database Mode: Cloud PostgreSQL (Neon)');
-  const { Client } = require('pg');
-  pgClient = new Client({
+  const { Pool } = require('pg');
+  pgClient = new Pool({
     connectionString: dbUrl,
     ssl: {
       rejectUnauthorized: false
     }
   });
-
+  
+pgClient.on('error', (err) => {
+    console.error('Unexpected error on idle database client:', err);
+  });
   // DB wrappers for PostgreSQL
   dbQuery = {
     async run(sql, params = []) {
@@ -136,8 +139,8 @@ async function initDatabase() {
   const hashed = hashPassword(defaultPassword);
 
   if (isPostgres) {
-    // PostgreSQL async connection & table creations
-    await pgClient.connect();
+    // Test connection with a query to avoid leaking a pool client connection
+    await pgClient.query('SELECT NOW()');
 
     await pgClient.query(`
       CREATE TABLE IF NOT EXISTS books (
